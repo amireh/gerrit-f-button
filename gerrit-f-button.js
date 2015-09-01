@@ -3,6 +3,7 @@
 // @namespace   ahmad@amireh.net
 // @include     https://gerrit.instructure.com/*
 // @version     1
+// @grant       GM_setClipboard
 // @grant       none
 // @run-at      document.end
 // ==/UserScript==
@@ -10,103 +11,293 @@
 /* eslint-env browser */
 /* eslint quotes:0, strict:0, no-underscore-dangle:0, no-console:0 */
 
+var HAS_SCROLL_INTO_VIEW = typeof HTMLElement.prototype.scrollIntoViewIfNeeded === 'function';
+var NR_AJAX_CALLS = 2;
+
 function GerritFButton() {
   var KC_F = 70;
 
   function CSS() {/*
+    .clipboard-16x16 {
+      background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAACaklEQVR4nG2SS2uUWRCGn6rvnC92LkbbyzgZLxkULyBJ1IyICjIwG3/ALAYcBnHhZhaCwvwC94qC+g8UREH/g+BKF0ZFicZgkml1EuykbyffOeWik+lO8IWioOA81Fvvkf17hkSQn0u9vTJY3jr0085dV0bGjpyKMfJh6v3S65cTfzfq9TeLi9UoqpVXb98t0SVnyS7+fmb01kLLOP/PVbZt207/wAAC1Ou1LZ8qlce3b17n2Pg4N65fuwv8sQagKoNnR3ZSjRnTr54xNWHElChiu8eUGDt8iAt/nePO7VsbWCeHGaG2wLHhH1A/iZYG0NLGrt6u5epnsLT+Pc4wWvV5Yt1hFrDUwlLAYguLq71FEQKWvgPAjGZtgaKhqAXUAvNfq3xqCJr3IXkv2tNHyPooisLWA7Itg/2nf92b/zbUG0ihioUl7r9oUj75J37oMG7HAfLt+3j54TM+7/mxlLvn0x9nJ7ssQFJBvAAJi0uIeUZGx9hcLqOqqAq1Wo1KpbJpbnbm4cG9w7tfT059AVCAqCAexLdBRSoIIZBiIsZIjIlfjp/g0uUrjIyO9nif93RuACQF8fq/r7AcaDZbxJRQBAxEhUwzGo0m0DlFGyCrFlYkUMSCGBMpgRHBDOcczWaDIsa1gKgg+erIyLzinUdVVnkgQkqJf+fmiEXR/Q8giSG+k7E6xeeezGVrIhMgyxxm1g0wWhap1ArMDDNopRLeOTJVWIdwziHSsesEJh48WZx+9HRRzMAMfH+pPDc70zf/35eVFDq1vBxIXRsI39GhfcPjZhwVVVjZyrD2hinVYkr33k3PFADfABCHPBaR9zqPAAAAAElFTkSuQmCC);
+      background-repeat: no-repeat;
+      background-position: center center;
+      width: 32px;
+    }
+
+    .col--centered {
+      text-align: center;
+    }
+
     .f-button__frame {
       position: fixed;
+      top: 0;
+      right: auto;
       bottom: 0;
-      left: 10%;
-      right: 10%;
-      height: 50%;
-      min-height: 120px;
-      max-height: 50%;
+      left: 0;
 
-      border: 1px solid #aaa;
+      width: 50%;
+      overflow: auto;
+
+      border-right: 1px solid #aaa;
+      background: white;
       padding: 10px;
 
-      background: white;
       z-index: 6;
+    }
 
-      overflow: auto;
+    .f-button__frame--commented-only .f-button__file:not(.f-button__file--commented) {
+      display: none;
+    }
+
+    .f-button__controls {
+      padding-bottom: 1em;
+      margin-bottom: 1em;
+      border-bottom: 1px solid #ddd;
     }
 
     .f-button__table {
       width: 100%;
     }
 
-    .f-button__table tbody tr:nth-of-type(odd) {
-      background: #fafafa;
+    .f-button__table td, .f-button__table th {
+      padding: 0;
+      line-height: 1.5rem;
+      vertical-align: top;
     }
 
     .f-button__table th {
       text-align: left;
     }
 
-    .f-button__table tbody tr:hover {
-      background: rgba(209, 245, 248, 0.32);
+    .f-button__table th.col--centered {
+      text-align: center;
     }
 
-    .f-button__table td, .f-button__table th {
-      padding: 0;
-      line-height: 1.5rem;
+    .f-button__file:nth-of-type(odd) {
+      background: #eee;
     }
 
-    .f-button__file--active {
-      font-weight: bold;
+    .f-button__file:hover {
+      background: #D8EDF9;
+    }
+
+    .f-button__file.f-button__file--active {
+      background-color: #fcfa96;
+    }
+
+    .f-button__file-link {
+      display: block;
     }
   */}
 
   function UI($) {
     var $frame = $('<div />', { 'class': 'f-button__frame' });
+    var $activeRow;
 
     return {
+      props: {
+        files: [],
+        currentFile: null,
+        commentedOnly: true,
+        showComments: false
+      },
+
+      /**
+       * Show or hide the F button frame.
+       */
       toggle: function() {
         if ($frame.parent().length > 0) {
           $frame.detach();
         }
         else {
           $frame.appendTo(document.body);
+          this.componentDidRender();
         }
       },
 
-      render: function(files, currentFilePath) {
+      /**
+       * Update the F button with new parameters.
+       *
+       * @param {Object} props
+       *
+       * @param {Object[]} props.files
+       *        The list of patch-set files with or without comment data.
+       *
+       * @param {String} props.currentFile
+       *        File path of the file being currently browsed in gerrit.
+       *
+       * @param {Boolean} props.commentedOnly
+       *        Whether to list only the files that have comments.
+       */
+      setProps: function(props) {
+        Object.keys(props).forEach(function(key) {
+          this.props[key] = props[key];
+        }.bind(this));
+
+        this.render();
+      },
+
+      /**
+       * @private
+       */
+      componentDidRender: function() {
+        // Scroll the active row into view, very handy when the PS has many files.
+        if ($activeRow && HAS_SCROLL_INTO_VIEW) {
+          $activeRow[0].scrollIntoViewIfNeeded();
+        }
+      },
+
+      /**
+       * @private
+       */
+      render: function() {
+        var $files = this.renderFiles(this.props.files, this.props.currentFile);
+        var $controls = this.renderControls();
+
+        $frame
+          .empty()
+          .append($controls)
+          .append($files)
+          .toggleClass('f-button__frame--commented-only', this.props.commentedOnly)
+        ;
+
+        this.componentDidRender();
+      },
+
+      /**
+       * @private
+       */
+      renderFiles: function(files, currentFile) {
         var $table = $('<table />', { 'class': 'f-button__table' });
         var $thead = $('<thead />').appendTo($table);
         var $tbody = $('<tbody />').appendTo($table);
         var $header = $('<tr />').appendTo($thead);
 
+        $activeRow = null;
+
+        $header.append($('<th />', {
+          title: 'Comments',
+          class: 'col--centered'
+        }).text('C'));
+
+        $header.append($('<th />'));
         $header.append($('<th />').text('File Path'));
-        $header.append($('<th />').text('Comments'));
 
         files.forEach(function(file) {
           var filePath = file.filePath;
-          var $row = $('<tr />');
+          var $row = $('<tr />', { class: 'f-button__file' });
           var hasComments = (file.comments || []).length > 0;
 
-          if (currentFilePath === filePath) {
+          if (currentFile === filePath) {
             $row.addClass('f-button__file--active');
+            $activeRow = $row;
+          }
+
+          if (hasComments) {
+            $row.addClass('f-button__file--commented');
           }
 
           $row.append(
-            $('<td />').append(
-              $('<a />', { href: file.url }).text(filePath)
-            )
+            $('<td />', {
+              class: 'col--centered'
+            }).text(hasComments ? file.comments.length : '')
           );
 
           $row.append(
-            $('<td />').text(
-              hasComments ?
-                file.comments.length + ' comments' :
-                ''
-              )
+            $('<td />', {
+              class: 'col--centered clipboard-16x16',
+              title: 'Copy filepath to clipboard'
+            }).bind('click', this.copyToClipboard.bind(this, filePath))
           );
 
+          var $textColumn = (
+            $('<td />').append(
+              $('<a />', { href: file.url, class: 'f-button__file-link' }).text(filePath)
+            )
+          );
+
+          if (this.props.showComments && hasComments) {
+            $textColumn.append(this.renderFileComments(file.comments));
+          }
+
+          $row.append($textColumn);
+
           $tbody.append($row);
+        }.bind(this));
+
+        return $table;
+      },
+
+      renderFileComments: function(comments) {
+        var $comments = $('<ol />', { class: 'f-button__file-comments' });
+
+        comments.forEach(function(comment) {
+          $comments.append(
+            $('<li />').text(
+              '[' + comment.author.username + '] ' + comment.message
+            )
+          );
         });
 
-        $frame.empty().append($table);
+        return $comments;
+      },
+
+      /**
+       * @private
+       */
+      renderControls: function() {
+        var $controls = $('<div />', {
+          class: 'f-button__controls'
+        });
+
+        var $toggleCommented = (
+          $('<label />')
+            .append($('<input />', {
+              type: 'checkbox',
+              checked: this.props.commentedOnly
+            }))
+            .append($('<span />').text('Hide files with no comments'))
+            .bind('click', this.toggleCommented.bind(this))
+        );
+
+        var $toggleComments = (
+          $('<label />')
+            .append($('<input />', {
+              type: 'checkbox',
+              checked: this.props.showComments
+            }))
+            .append($('<span />').text('Display comment bodies'))
+            .bind('click', this.toggleComments.bind(this))
+        );
+
+        $controls.append($toggleCommented);
+        $controls.append($toggleComments);
+
+        return $controls;
+      },
+
+      /**
+       * @private
+       *
+       * Copy a filepath to the clipboard.
+       */
+      copyToClipboard: function(filePath, e) {
+        GM_setClipboard(filePath);
+      },
+
+      /**
+       * @private
+       */
+      toggleCommented: function() {
+        this.setProps({ commentedOnly: !this.props.commentedOnly });
+      },
+
+      /**
+       * @private
+       */
+      toggleComments: function() {
+        this.setProps({ showComments: !this.props.showComments });
       }
     };
   }
@@ -155,29 +346,26 @@ function GerritFButton() {
   function fetch(chNumber, rvNumber, done) {
     var files = [];
     var BASE_URL = [ '/changes', chNumber, 'revisions', rvNumber ].join('/');
+    var callsDone = 0;
 
     function set(filePath, item, value) {
-      var entry = files.filter(function(_entry) {
-        return _entry.filePath === filePath;
+      var fileEntry = files.filter(function(entry) {
+        return entry.filePath === filePath;
       })[0];
 
-      if (!entry) {
-        entry = { filePath: filePath };
-        files.push(entry);
+      if (!fileEntry) {
+        fileEntry = { filePath: filePath };
+        files.push(fileEntry);
       }
 
-      entry[item] = value;
+      fileEntry[item] = value;
     }
 
-    var tick = (function(NR_AJAX_CALLS) {
-      var nrAjaxCallsDone = 0;
-
-      return function() {
-        if (++nrAjaxCallsDone === NR_AJAX_CALLS) {
-          done(files);
-        }
-      };
-    }(2 /* change me if u add another getRemote() call! */));
+    function tick() {
+      if (++callsDone === NR_AJAX_CALLS) {
+        done(files);
+      }
+    }
 
     function getUrlForFile(filePath) {
       return (
@@ -218,7 +406,11 @@ function GerritFButton() {
       function fetchFilesAndRender(chNumber, rvNumber) {
         fetch(chNumber, rvNumber, function(files) {
           cachedFiles = files;
-          ui.render(cachedFiles, context.currentFile);
+
+          ui.setProps({
+            files: cachedFiles,
+            currentFile: context.currentFile
+          });
         });
       }
 
@@ -257,7 +449,10 @@ function GerritFButton() {
             fetchFilesAndRender(context.chNumber, context.rvNumber);
           }
           else {
-            ui.render(cachedFiles, context.currentFile);
+            ui.setProps({
+              files: cachedFiles,
+              currentFile: context.currentFile
+            });
           }
         }
         else { // no longer in a change? untrack the downloaded file listing
@@ -278,6 +473,8 @@ function GerritFButton() {
       });
 
       injectCSS();
+
+      console.log('gerrit-f-button: active.');
     }
   };
 }
