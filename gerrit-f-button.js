@@ -466,7 +466,7 @@ function GerritFButton() {
         }
 
         if ([ e.keyCode, e.which ].indexOf(KC_F) > -1) {
-          if (!$(e.target).is('.com-google-gerrit-client-diff-DraftBox_BinderImpl_GenCss_style-editArea' /* heheheh */)) {
+          if (!$(e.target).is('input, textarea')) {
             ui.toggle();
           }
         }

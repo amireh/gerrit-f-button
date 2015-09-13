@@ -18,6 +18,12 @@ within 30 seconds since it gets loaded, otherwise it will not work. If it works,
 
 Simply press F (or f) when you're viewing a change (or a file in a change revision) to bring up the glorious F-button frame.
 
+## Changelog
+
+**09/13/2015**
+
+- The popup will no longer show up if you're writing in an `<input />` or a `<textarea />` widgets
+
 ## License
 
 MIT
