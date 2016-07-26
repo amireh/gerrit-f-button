@@ -1,0 +1,10 @@
+{
+  "env": { "browser": true, "node": true, "mocha": true },
+  "rules": {
+    "no-undef": 2,
+    "no-unused-vars": 2
+  },
+  "globals": {
+    "GM_setClipboard": false
+  }
+}

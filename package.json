@@ -1,0 +1,32 @@
+{
+  "name": "gerrit-f-button",
+  "version": "1.0.0",
+  "description": "Gerrit F button TamperMonkey script",
+  "main": "gerrit-f-button.js",
+  "scripts": {
+    "test": "mocha 'src/**/*.test.js'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/amireh/gerrit-f-button.git"
+  },
+  "keywords": [
+    "gerrit",
+    "f-button",
+    "browser",
+    "plugin",
+    "script"
+  ],
+  "author": "Ahmad Amireh",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/amireh/gerrit-f-button/issues"
+  },
+  "homepage": "https://github.com/amireh/gerrit-f-button#readme",
+  "devDependencies": {
+    "chai": "3.5.0",
+    "jquery": "3.1.0",
+    "jsdom": "9.4.1",
+    "mocha": "2.5.3"
+  }
+}
