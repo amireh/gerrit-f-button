@@ -2,7 +2,7 @@
 
 Baby, the F button is back.
 
-![gerrit-f-button screenshot](./gerrit-f-button.png)
+![gerrit-f-button screenshot](./gerrit-f-button-v2.0.png)
 
 ## Installation
 
