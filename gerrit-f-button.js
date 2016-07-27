@@ -8,6 +8,8 @@
 // @run-at      document.end
 // ==/UserScript==
 
+/* gerrit-f-button.js v2.1.0 */
+
 (function () {
   'use strict';
 
@@ -240,6 +242,8 @@
     .f-button-file__icon.f-button-icon__folder { margin-top: 2px; }
   */}.toString().replace('function () {/*', '').replace('*/}', '');
 
+  // TODO: we don't really need all of this, just expose two functions that
+  // calculate the target cursor within a list given a target
   function LinkedList($, set) {
     this.$ = $;
     this.$set = $(set);

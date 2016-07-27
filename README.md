@@ -55,7 +55,11 @@ work on that first.
 
 ## Changelog
 
-**2.1**
+**2.1.1**
+
+- Version is now attached in the banner inside `gerrit-f-button.js`
+
+**2.1.0**
 
 - Added an option to hide the panel in Unified Diff view since Gerrit still 
   supports the native F button functionality there
