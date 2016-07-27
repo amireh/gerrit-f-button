@@ -4,6 +4,8 @@
   "description": "Gerrit F button TamperMonkey script",
   "main": "gerrit-f-button.js",
   "scripts": {
+    "build": "rollup -c",
+    "lint": "eslint src",
     "test": "mocha 'src/**/*.test.js'"
   },
   "repository": {
@@ -25,8 +27,10 @@
   "homepage": "https://github.com/amireh/gerrit-f-button#readme",
   "devDependencies": {
     "chai": "3.5.0",
+    "eslint": "3.1.1",
     "jquery": "3.1.0",
     "jsdom": "9.4.1",
-    "mocha": "2.5.3"
+    "mocha": "2.5.3",
+    "rollup": "0.34.1"
   }
 }

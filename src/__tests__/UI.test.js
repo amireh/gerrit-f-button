@@ -5,7 +5,6 @@ const jQuery = require('jquery');
 const jsdom = require('jsdom');
 const assert = require('chai').assert;
 const UI = GerritFButton.UI;
-const TreeView = GerritFButton.TreeView;
 
 describe('UI', function() {
   let dom, window, document, $, container;
@@ -25,21 +24,6 @@ describe('UI', function() {
     document = null;
     window = null;
     dom = null;
-  });
-
-  describe('TreeView', function() {
-    it('should group files by their paths', function() {
-      var tree = TreeView([
-        { filePath: '/lib/foo/a.js' },
-        { filePath: '/lib/foo/b.js' },
-        { filePath: '/lib/bar.js' },
-      ]);
-
-      assert.include(Object.keys(tree.children), 'lib');
-      assert.include(Object.keys(tree.children.lib.children), 'foo');
-      assert.include(tree.children.lib.children.foo.items[0], { filePath: '/lib/foo/a.js' });
-      assert.include(tree.children.lib.children.foo.items[1], { filePath: '/lib/foo/b.js' });
-    });
   });
 
   it('should work', function() {

@@ -18,10 +18,10 @@
 
   <script>
     (function(window) {
-      var GerritFButton = window.GerritFButton;
-      var ui = GerritFButton.UI(window.jQuery);
+      var Package = window.GerritFButton;
+      var ui = Package.UI(window.jQuery);
 
-      GerritFButton.injectCSS();
+      Package.injectCSS(Package.Styles);
 
       ui.toggle();
       ui.setProps({
