@@ -106,6 +106,10 @@ export default function GerritFButton() {
     return localStorage.getItem('GERRIT_F_BUTTON/DISPLAY_AS_OVERLAY') === '1';
   }
 
+  function shouldDisplayAsTree() {
+    return localStorage.getItem('GERRIT_F_BUTTON/DISPLAY_AS_LIST') !== '1';
+  }
+
   return {
     install: function(Gerrit, $) {
       var ui = GerritFButtonUI($);
@@ -114,6 +118,7 @@ export default function GerritFButton() {
       ui.setProps({
         hideInUnifiedMode: shouldHideInUnifiedMode(),
         displayAsOverlay: shouldDisplayAsOverlay(),
+        displayAsTree: shouldDisplayAsTree(),
 
         onToggleHideInUnifiedMode: function(checked) {
           if (checked) {
@@ -125,6 +130,19 @@ export default function GerritFButton() {
 
           ui.setProps({
             hideInUnifiedMode: shouldHideInUnifiedMode()
+          });
+        },
+
+        onToggleDisplayAsTree: function(checked) {
+          if (checked) {
+            localStorage.removeItem('GERRIT_F_BUTTON/DISPLAY_AS_LIST');
+          }
+          else {
+            localStorage.setItem('GERRIT_F_BUTTON/DISPLAY_AS_LIST', '1');
+          }
+
+          ui.setProps({
+            displayAsTree: shouldDisplayAsTree()
           });
         },
 

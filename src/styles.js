@@ -84,6 +84,14 @@ export default function() {/*
     display: none;
   }
 
+  .f-button__frame--list-view .f-button-file__folder {
+    padding-left: 0;
+  }
+
+  .f-button__frame--list-view .f-button-file__folder-header {
+    display: none;
+  }
+
   .f-button__controls {
     padding-bottom: 1em;
     margin-bottom: 1em;

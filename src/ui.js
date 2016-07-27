@@ -18,6 +18,7 @@ export default function GerritFButtonUI($) {
       commentedOnly: false,
       hideInUnifiedMode: false,
       displayAsOverlay: false,
+      displayAsTree: true,
       onToggleHideInUnifiedMode: Function.prototype,
       onToggleDisplayAsOverlay: Function.prototype,
     },
@@ -84,6 +85,8 @@ export default function GerritFButtonUI($) {
       if ($activeRow && HAS_SCROLL_INTO_VIEW) {
         $activeRow[0].scrollIntoViewIfNeeded();
       }
+
+      $frame.toggleClass('f-button__frame--list-view', !this.props.displayAsTree);
 
       if ($container) {
         $container.toggleClass('gerrit--with-f-button-overlay', this.props.displayAsOverlay);
@@ -172,7 +175,11 @@ export default function GerritFButtonUI($) {
      */
     renderFile: function(file, currentFile) {
       var filePath = file.filePath;
-      var fileName = file.filePath.split('/').slice(-1)[0];
+      var fileName = this.props.displayAsTree ?
+        file.filePath.split('/').slice(-1)[0] :
+        file.filePath
+      ;
+
       var hasComments = file.comments && file.comments.length > 0;
       var $row = $('<li />', {
         class: classSet({
@@ -256,6 +263,15 @@ export default function GerritFButtonUI($) {
         .appendTo($controls)
       ;
 
+      $('<label />')
+        .append(
+          $('<input />', { type: 'checkbox', checked: this.props.displayAsTree })
+          .bind('change', this.toggleDisplayAsTree.bind(this))
+        )
+        .append($('<span />').text('Display files as a tree'))
+        .appendTo($controls)
+      ;
+
       return $controls;
     },
 
@@ -281,6 +297,10 @@ export default function GerritFButtonUI($) {
 
     toggleDisplayAsOverlay: function(e) {
       this.props.onToggleDisplayAsOverlay(e.target.checked);
-    }
+    },
+
+    toggleDisplayAsTree: function(e) {
+      this.props.onToggleDisplayAsTree(e.target.checked);
+    },
   };
 }
