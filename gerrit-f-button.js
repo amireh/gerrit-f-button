@@ -241,21 +241,36 @@ function GerritFButton() {
     });
   }
 
+  function isInUnifiedMode() {
+    return !!document.querySelector('.gerritBody .unifiedTable').length > 0;
+  }
+
+  function shouldHideInUnifiedMode() {
+    return localStorage.getItem('GERRIT_F_BUTTON/HIDE_IN_UNIFIED_MODE') === '1';
+  }
+
   return {
     install: function(Gerrit, $) {
       var ui = GerritFButtonUI($);
       var context, cachedFiles;
 
-      function fetchFilesAndRender(chNumber, rvNumber) {
-        fetch(chNumber, rvNumber, function(files) {
-          cachedFiles = files;
+      ui.setProps({
+        hideInUnifiedMode: shouldHideInUnifiedMode(),
+        onToggleHideInUnifiedMode: function(checked) {
+          if (checked) {
+            localStorage.setItem('GERRIT_F_BUTTON/HIDE_IN_UNIFIED_MODE', '1');
+          }
+          else {
+            localStorage.removeItem('GERRIT_F_BUTTON/HIDE_IN_UNIFIED_MODE');
+          }
 
           ui.setProps({
-            files: cachedFiles,
-            currentFile: context.currentFile
+            hideInUnifiedMode: shouldHideInUnifiedMode()
           });
-        });
-      }
+        }
+      })
+
+      injectCSS();
 
       // @event 'showchange'
       //
@@ -292,10 +307,7 @@ function GerritFButton() {
             fetchFilesAndRender(context.chNumber, context.rvNumber);
           }
           else {
-            ui.setProps({
-              files: cachedFiles,
-              currentFile: context.currentFile
-            });
+            render();
           }
         }
         else { // no longer in a change? untrack the downloaded file listing
@@ -304,7 +316,14 @@ function GerritFButton() {
       });
 
       window.addEventListener('keyup', function(e) {
-        if (!context.chNumber) { // not viewing a change? forget it!
+        if (
+          !context.chNumber /* not viewing a change? forget it! */ ||
+          (isInUnifiedMode() && shouldHideInUnifiedMode())
+        ) {
+          if (ui.isMounted()) {
+            ui.unmount();
+          }
+
           return;
         }
 
@@ -315,9 +334,22 @@ function GerritFButton() {
         }
       });
 
-      injectCSS();
-
       console.log('gerrit-f-button: active.');
+
+      function fetchFilesAndRender(chNumber, rvNumber) {
+        fetch(chNumber, rvNumber, function(files) {
+          cachedFiles = files;
+
+          render();
+        });
+      }
+
+      function render() {
+        ui.setProps({
+          files: cachedFiles,
+          currentFile: context.currentFile
+        });
+      }
     }
   };
 }
@@ -338,23 +370,40 @@ function GerritFButtonUI($) {
       files: [],
       currentFile: null,
       commentedOnly: false,
+      hideInUnifiedMode: false,
+      onToggleHideInUnifiedMode: Function.prototype,
+    },
+
+    isMounted: function() {
+      return $frame.parent().length === 1;
+    },
+
+    mount: function(container) {
+      var $container = $(container || document.body);
+
+      $container.addClass('gerrit--with-f-button');
+      $container.append($frame);
+
+      this.componentDidRender();
     },
 
     /**
      * Show or hide the F button frame.
      */
     toggle: function(container) {
-      var $container = $(container || document.body);
-
-      if ($frame.parent().length > 0) {
-        $frame.detach();
-        $container.removeClass('gerrit--with-f-button');
+      if (this.isMounted()) {
+        this.unmount(container);
       }
       else {
-        $container.addClass('gerrit--with-f-button');
-        $container.append($frame);
-        this.componentDidRender();
+        this.mount(container);
       }
+    },
+
+    unmount: function(container) {
+      var $container = $(container || document.body);
+
+      $frame.detach();
+      $container.removeClass('gerrit--with-f-button');
     },
 
     /**
@@ -530,17 +579,22 @@ function GerritFButtonUI($) {
         class: 'f-button__controls'
       });
 
-      var $toggleCommented = (
-        $('<label />')
-          .append($('<input />', {
-            type: 'checkbox',
-            checked: this.props.commentedOnly
-          }))
-          .append($('<span />').text('Hide files with no comments'))
-          .bind('click', this.toggleCommented.bind(this))
-      );
+      $('<label />')
+        .append($('<input />', {
+          type: 'checkbox',
+          checked: this.props.commentedOnly
+        }))
+        .append($('<span />').text('Hide files with no comments'))
+        .bind('click', this.toggleCommented.bind(this))
+        .appendTo($controls)
+      ;
 
-      $controls.append($toggleCommented);
+      $('<label />')
+        .append($('<input />', { type: 'checkbox', checked: this.props.hideInUnifiedMode }))
+        .append($('<span />').text('Disable in Unified Diff view'))
+        .bind('click', this.toggleHideInUnifiedMode.bind(this))
+        .appendTo($controls)
+      ;
 
       return $controls;
     },
@@ -560,6 +614,10 @@ function GerritFButtonUI($) {
     toggleCommented: function() {
       this.setProps({ commentedOnly: !this.props.commentedOnly });
     },
+
+    toggleHideInUnifiedMode: function(e) {
+      this.props.onToggleHideInUnifiedMode(e.target.checked);
+    }
   };
 }
 
