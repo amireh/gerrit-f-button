@@ -55,6 +55,17 @@ work on that first.
 
 ## Changelog
 
+**2.1**
+
+- Added an option to hide the panel in Unified Diff view since Gerrit still 
+  supports the native F button functionality there
+- Added an option to display files in a "list" view; no folders, full filepaths
+  similar to the legacy F UI
+- Added an option to display the panel as an overlay, similar to the legacy
+  F UI
+- Keyboard navigation is now possible using J, K, and RETURN
+- (internal) Broke the thing into modules since it was getting big
+
 **2.0**
 
 - Files are now displayed in a tree view, upping the glory factor to a 

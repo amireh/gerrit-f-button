@@ -1,6 +1,6 @@
 {
   "name": "gerrit-f-button",
-  "version": "1.0.0",
+  "version": "2.1.0",
   "description": "Gerrit F button TamperMonkey script",
   "main": "gerrit-f-button.js",
   "scripts": {

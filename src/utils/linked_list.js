@@ -1,3 +1,5 @@
+// TODO: we don't really need all of this, just expose two functions that
+// calculate the target cursor within a list given a target
 export default function LinkedList($, set) {
   this.$ = $;
   this.$set = $(set);
