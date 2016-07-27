@@ -7,7 +7,7 @@ export default function GerritFButtonUI($) {
   );
 
   var $frame = $('<div />', { 'class': 'f-button__frame' });
-  var $activeRow;
+  var $container, $activeRow;
 
   return {
     node: $frame[0],
@@ -17,15 +17,17 @@ export default function GerritFButtonUI($) {
       currentFile: null,
       commentedOnly: false,
       hideInUnifiedMode: false,
+      displayAsOverlay: false,
       onToggleHideInUnifiedMode: Function.prototype,
+      onToggleDisplayAsOverlay: Function.prototype,
     },
 
     isMounted: function() {
       return $frame.parent().length === 1;
     },
 
-    mount: function(container) {
-      var $container = $(container || document.body);
+    mount: function(_container) {
+      $container = $(_container || document.body);
 
       $container.addClass('gerrit--with-f-button');
       $container.append($frame);
@@ -45,11 +47,11 @@ export default function GerritFButtonUI($) {
       }
     },
 
-    unmount: function(container) {
-      var $container = $(container || document.body);
-
+    unmount: function() {
       $frame.detach();
       $container.removeClass('gerrit--with-f-button');
+      $container.removeClass('gerrit--with-f-button-overlay');
+      $container = null;
     },
 
     /**
@@ -81,6 +83,10 @@ export default function GerritFButtonUI($) {
       // Scroll the active row into view, very handy when the PS has many files.
       if ($activeRow && HAS_SCROLL_INTO_VIEW) {
         $activeRow[0].scrollIntoViewIfNeeded();
+      }
+
+      if ($container) {
+        $container.toggleClass('gerrit--with-f-button-overlay', this.props.displayAsOverlay);
       }
     },
 
@@ -241,6 +247,15 @@ export default function GerritFButtonUI($) {
         .appendTo($controls)
       ;
 
+      $('<label />')
+        .append(
+          $('<input />', { type: 'checkbox', checked: this.props.displayAsOverlay })
+          .bind('change', this.toggleDisplayAsOverlay.bind(this))
+        )
+        .append($('<span />').text('Display as overlay'))
+        .appendTo($controls)
+      ;
+
       return $controls;
     },
 
@@ -262,6 +277,10 @@ export default function GerritFButtonUI($) {
 
     toggleHideInUnifiedMode: function(e) {
       this.props.onToggleHideInUnifiedMode(e.target.checked);
+    },
+
+    toggleDisplayAsOverlay: function(e) {
+      this.props.onToggleDisplayAsOverlay(e.target.checked);
     }
   };
 }

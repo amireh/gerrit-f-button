@@ -1,13 +1,3 @@
-// ==UserScript==
-// @name        Gerrit F Button
-// @namespace   ahmad@amireh.net
-// @include     https://gerrit.instructure.com/*
-// @version     2
-// @grant       none
-// @grant       GM_setClipboard
-// @run-at      document.end
-// ==/UserScript==
-
 import GerritFButton from './core';
 import GerritFButtonUI from './ui';
 import GerritFButtonStyles from './styles';

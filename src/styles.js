@@ -38,6 +38,10 @@ export default function() {/*
     margin-left: 280px;
   }
 
+  body.gerrit--with-f-button-overlay {
+    margin-left: 0;
+  }
+
   .f-button__frame {
     position: fixed;
     top: 0;
@@ -48,7 +52,9 @@ export default function() {/*
     width: 240px;
     overflow: auto;
 
-    border-right: 1px solid #aaa;
+    border-color: #aaa;
+    border-right-style: solid;
+    border-right-width: 1px;
     background: white;
     padding: 10px;
 
@@ -56,6 +62,22 @@ export default function() {/*
     line-height: 1.4;
 
     z-index: 6;
+  }
+
+  body.gerrit--with-f-button-overlay .f-button__frame {
+    width: 50%;
+    left: 25%;
+    top: 50%;
+    border-left-width: 1px;
+    border-left-style: solid;
+    border-top-style: solid;
+    border-top-width: 1px;
+
+    opacity: 0.85;
+  }
+
+  body.gerrit--with-f-button-overlay .f-button__frame:hover {
+    opacity: 1;
   }
 
   .f-button__frame--commented-only .f-button-file:not(.f-button-file--commented) {
