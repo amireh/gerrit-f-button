@@ -1,4 +1,5 @@
 import { TreeView, classSet, copyToClipboard } from './utils';
+import LinkedList from './utils/linked_list';
 
 export default function GerritFButtonUI($) {
   var HAS_SCROLL_INTO_VIEW = (
@@ -7,26 +8,43 @@ export default function GerritFButtonUI($) {
   );
 
   var $frame = $('<div />', { 'class': 'f-button__frame' });
-  var $container, $activeRow;
+  var $container;
 
   return {
     node: $frame[0],
 
+    state: {
+      /**
+       * @property {Boolean}
+       * Whether to list only the files that have comments.
+       */
+      commentedOnly: false,
+
+      /**
+       * @property {String}
+       *
+       * ID of the "selected" file so that we can highlight during keyboard
+       * navigation.
+       *
+       * Defaults to: @props.activeFile
+       */
+      selectedFile: null,
+    },
+
     props: {
       files: [],
-      currentFile: null,
-      commentedOnly: false,
+      activeFile: null,
       hideInUnifiedMode: false,
       displayAsOverlay: false,
       displayAsTree: true,
       onToggleHideInUnifiedMode: Function.prototype,
       onToggleDisplayAsOverlay: Function.prototype,
+      onToggleDisplayAsTree: Function.prototype,
     },
 
-    isMounted: function() {
-      return $frame.parent().length === 1;
-    },
-
+    /**
+     * @public
+     */
     mount: function(_container) {
       $container = $(_container || document.body);
 
@@ -37,25 +55,54 @@ export default function GerritFButtonUI($) {
     },
 
     /**
-     * Show or hide the F button frame.
+     * @public
      */
-    toggle: function(container) {
+    isMounted: function() {
+      return $frame.parent().length === 1;
+    },
+
+    /**
+     * Show or hide the F button frame.
+     *
+     * @param {?HTMLElement} [container=document.body]
+     * @param {?Object} options
+     * @param {Boolean} options.stealFocus
+     */
+    toggle: function(container, options) {
       if (this.isMounted()) {
         this.unmount(container);
       }
       else {
         this.mount(container);
+
+        if (options && options.stealFocus) {
+          this.stealFocus();
+        }
       }
     },
 
+    stealFocus: function() {
+      if (document.activeElement) {
+        document.activeElement.blur();
+      }
+
+      $frame.focus();
+    },
+
+    /**
+     * @public
+     */
     unmount: function() {
       $frame.detach();
+
       $container.removeClass('gerrit--with-f-button');
       $container.removeClass('gerrit--with-f-button-overlay');
       $container = null;
     },
 
     /**
+     * @public
+     *
      * Update the F button with new parameters.
      *
      * @param {Object} props
@@ -63,11 +110,8 @@ export default function GerritFButtonUI($) {
      * @param {Object[]} props.files
      *        The list of patch-set files with or without comment data.
      *
-     * @param {String} props.currentFile
+     * @param {String} props.activeFile
      *        File path of the file being currently browsed in gerrit.
-     *
-     * @param {Boolean} props.commentedOnly
-     *        Whether to list only the files that have comments.
      */
     setProps: function(props) {
       Object.keys(props).forEach(function(key) {
@@ -78,12 +122,65 @@ export default function GerritFButtonUI($) {
     },
 
     /**
+     * @public
+     *
+     * Highlight the file following the currently selected file.
+     */
+    selectNextFile: function() {
+      var list = new LinkedList($, $frame.find('.f-button-file'));
+      var $selectedFile = $(this.getSelectedFileDOMNode());
+
+      if ($selectedFile) {
+        list.setCursor($selectedFile);
+      }
+
+      var $next = list.getNext();
+
+      if ($next.length) {
+        this.selectFile($next[0].getAttribute('data-id'));
+      }
+    },
+
+    /**
+     * @public
+     *
+     * Highlight the file preceding the currently selected file.
+     */
+    selectPreviousFile: function() {
+      var list = new LinkedList($, $frame.find('.f-button-file'));
+      var $selectedFile = $(this.getSelectedFileDOMNode());
+
+      if ($selectedFile) {
+        list.setCursor($selectedFile);
+      }
+
+      var $prev = list.getPrevious();
+
+      if ($prev.length) {
+        this.selectFile($prev[0].getAttribute('data-id'));
+      }
+    },
+
+    /**
+     * @public
+     *
+     * Activate the link of the selected file.
+     */
+    activateSelectedFile: function() {
+      if (this.state.selectedFile) {
+        this.getSelectedFileDOMNode().querySelector('a').click();
+      }
+    },
+
+    /**
      * @private
      */
     componentDidRender: function() {
+      var activeFileDOMNode = this.getActiveFileDOMNode();
+
       // Scroll the active row into view, very handy when the PS has many files.
-      if ($activeRow && HAS_SCROLL_INTO_VIEW) {
-        $activeRow[0].scrollIntoViewIfNeeded();
+      if (activeFileDOMNode && HAS_SCROLL_INTO_VIEW) {
+        activeFileDOMNode.scrollIntoViewIfNeeded();
       }
 
       $frame.toggleClass('f-button__frame--list-view', !this.props.displayAsTree);
@@ -97,14 +194,14 @@ export default function GerritFButtonUI($) {
      * @private
      */
     render: function() {
-      var $files = this.renderFiles(this.props.files, this.props.currentFile);
+      var $files = this.renderFiles();
       var $controls = this.renderControls();
 
       $frame
         .empty()
-        .append($controls)
         .append($files)
-        .toggleClass('f-button__frame--commented-only', this.props.commentedOnly)
+        .append($controls)
+        .toggleClass('f-button__frame--commented-only', this.state.commentedOnly)
       ;
 
       this.componentDidRender();
@@ -113,12 +210,11 @@ export default function GerritFButtonUI($) {
     /**
      * @private
      */
-    renderFiles: function(files, currentFile) {
+    renderFiles: function() {
       var $list = $('<div />', { 'class': 'f-button__table' });
-      var fileTree = TreeView(files);
+      var fileTree = TreeView(this.props.files);
 
-      $activeRow = null;
-      $list.append(this.renderFileTree(fileTree, currentFile, true));
+      $list.append(this.renderFileTree(fileTree, true));
 
       return $list;
     },
@@ -126,7 +222,7 @@ export default function GerritFButtonUI($) {
     /**
      * @private
      */
-    renderFileTree: function(tree, currentFile, isRoot) {
+    renderFileTree: function(tree, isRoot) {
       var $list = $('<ol />', {
         class: classSet({
           'f-button-file__folder': true,
@@ -136,7 +232,7 @@ export default function GerritFButtonUI($) {
 
       // folders:
       Object.keys(tree.children).sort().forEach(function(branch) {
-        var $children = this.renderFileTree(tree.children[branch], currentFile);
+        var $children = this.renderFileTree(tree.children[branch]);
 
         if (!$children) {
           return null;
@@ -160,11 +256,11 @@ export default function GerritFButtonUI($) {
 
       // files:
       tree.items.forEach(function(file) {
-        if (this.props.commentedOnly && (!file.comments || !file.comments.length)) {
+        if (this.state.commentedOnly && (!file.comments || !file.comments.length)) {
           return null;
         }
 
-        $list.append(this.renderFile(file, currentFile));
+        $list.append(this.renderFile(file));
       }.bind(this));
 
       return $list.children().length === 0 ? null : $list;
@@ -173,7 +269,7 @@ export default function GerritFButtonUI($) {
     /**
      * @private
      */
-    renderFile: function(file, currentFile) {
+    renderFile: function(file) {
       var filePath = file.filePath;
       var fileName = this.props.displayAsTree ?
         file.filePath.split('/').slice(-1)[0] :
@@ -182,16 +278,14 @@ export default function GerritFButtonUI($) {
 
       var hasComments = file.comments && file.comments.length > 0;
       var $row = $('<li />', {
+        'data-id': file.filePath,
         class: classSet({
           'f-button-file': true,
-          'f-button-file--active': currentFile === filePath,
+          'f-button-file--active': this.props.activeFile === filePath,
+          'f-button-file--selected': this.state.selectedFile === filePath,
           'f-button-file--commented': hasComments
         })
       });
-
-      if (currentFile === filePath) {
-        $activeRow = $row;
-      }
 
       $row.append(
         $('<span />', {
@@ -216,20 +310,6 @@ export default function GerritFButtonUI($) {
       return $row;
     },
 
-    renderFileComments: function(comments) {
-      var $comments = $('<ol />', { class: 'f-button-file__comments' });
-
-      comments.forEach(function(comment) {
-        $comments.append(
-          $('<li />').text(
-            '[' + comment.author.username + '] ' + comment.message
-          )
-        );
-      });
-
-      return $comments;
-    },
-
     /**
      * @private
      */
@@ -239,7 +319,7 @@ export default function GerritFButtonUI($) {
       });
 
       $('<label />')
-        .append($('<input />', { type: 'checkbox', checked: this.props.commentedOnly }))
+        .append($('<input />', { type: 'checkbox', checked: this.state.commentedOnly }))
         .append($('<span />').text('Hide files with no comments'))
         .appendTo($controls)
         .bind('click', this.toggleCommented.bind(this))
@@ -275,6 +355,48 @@ export default function GerritFButtonUI($) {
       return $controls;
     },
 
+    /** @private */
+    setState: function(nextState) {
+      Object.keys(nextState).forEach(function(key) {
+        this.state[key] = nextState[key];
+      }.bind(this));
+
+      this.render();
+    },
+
+    /** @private */
+    selectFile: function(filePath) {
+      if (this.props.activeFile === filePath) {
+        this.setState({ selectedFile: null });
+      }
+      else {
+        this.setState({ selectedFile: filePath });
+      }
+    },
+
+    /** @private */
+    getSelectedFile: function() {
+      return this.state.selectedFile || this.props.activeFile;
+    },
+
+    /** @private */
+    getSelectedFileDOMNode: function() {
+      var selectedFile = this.getSelectedFile();
+
+      return [].filter.call($frame.find('.f-button-file'), function(el) {
+        return el.getAttribute('data-id') === selectedFile;
+      })[0];
+    },
+
+    /** @private */
+    getActiveFileDOMNode: function() {
+      var activeFile = this.props.activeFile;
+
+      return [].filter.call($frame.find('.f-button-file'), function(el) {
+        return el.getAttribute('data-id') === activeFile;
+      })[0];
+    },
+
     /**
      * @private
      *
@@ -284,21 +406,22 @@ export default function GerritFButtonUI($) {
       copyToClipboard(filePath);
     },
 
-    /**
-     * @private
-     */
+    /** @private */
     toggleCommented: function() {
-      this.setProps({ commentedOnly: !this.props.commentedOnly });
+      this.setState({ commentedOnly: !this.state.commentedOnly });
     },
 
+    /** @private */
     toggleHideInUnifiedMode: function(e) {
       this.props.onToggleHideInUnifiedMode(e.target.checked);
     },
 
+    /** @private */
     toggleDisplayAsOverlay: function(e) {
       this.props.onToggleDisplayAsOverlay(e.target.checked);
     },
 
+    /** @private */
     toggleDisplayAsTree: function(e) {
       this.props.onToggleDisplayAsTree(e.target.checked);
     },

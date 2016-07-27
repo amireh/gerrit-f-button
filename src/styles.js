@@ -93,20 +93,26 @@ export default function() {/*
   }
 
   .f-button__controls {
-    padding-bottom: 1em;
-    margin-bottom: 1em;
-    border-bottom: 1px solid #ddd;
+    border-top: 1px solid #ddd;
+    margin-top: 1em;
+    padding-top: 1em;
   }
 
   .f-button__controls label {
     display: block;
   }
 
+  .f-button__controls input {
+    margin-top: 0;
+    margin-bottom: 0;
+    vertical-align: middle;
+  }
+
   .f-button-file {
     list-style: none;
   }
 
-  .f-button-file:hover {
+  .f-button-file:hover, .f-button-file--selected {
     background: #fcfa96;
   }
 
@@ -150,6 +156,7 @@ export default function() {/*
 
   .f-button-file__folder--root {
     padding-left: 0;
+    margin: 0;
   }
 
   .f-button-file__comment-count {

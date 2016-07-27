@@ -12,9 +12,11 @@ if (typeof window !== 'undefined' && typeof window.GerritFButton !== 'undefined'
 }
 // mocha tests
 else if (typeof module !== 'undefined') {
+  /* eslint-disable */
   exports.Core = GerritFButton;
   exports.UI = GerritFButtonUI;
   exports.TreeView = TreeView;
+  /* eslint-enable */
 }
 // Gerrit env
 else {

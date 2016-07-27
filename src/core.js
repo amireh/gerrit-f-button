@@ -1,12 +1,9 @@
-import { discardLeadingSlash, injectCSS } from './utils';
-import Styles from './styles';
-import GerritFButtonUI from './ui';
+import { discardLeadingSlash } from './utils';
+import GerritFButtonUIController from './ui_controller';
 
 var NR_AJAX_CALLS = 2;
 
 export default function GerritFButton() {
-  var KC_F = 70;
-
   function parseContextFromURL(url) {
     var ctx = {};
     var matchChange = url.match(/^\/c\/(\d+)/);
@@ -15,7 +12,7 @@ export default function GerritFButton() {
 
     ctx.chNumber = matchChange ? matchChange[1] : null;
     ctx.rvNumber = matchRevision ? matchRevision[1] : null;
-    ctx.currentFile = matchFile ? matchFile[1] : null;
+    ctx.activeFile = matchFile ? matchFile[1] : null;
 
     return ctx;
   }
@@ -94,73 +91,14 @@ export default function GerritFButton() {
     });
   }
 
-  function isInUnifiedMode() {
-    return !!document.querySelector('.gerritBody .unifiedTable');
-  }
-
-  function shouldHideInUnifiedMode() {
-    return localStorage.getItem('GERRIT_F_BUTTON/HIDE_IN_UNIFIED_MODE') === '1';
-  }
-
-  function shouldDisplayAsOverlay() {
-    return localStorage.getItem('GERRIT_F_BUTTON/DISPLAY_AS_OVERLAY') === '1';
-  }
-
-  function shouldDisplayAsTree() {
-    return localStorage.getItem('GERRIT_F_BUTTON/DISPLAY_AS_LIST') !== '1';
-  }
-
   return {
     install: function(Gerrit, $) {
-      var ui = GerritFButtonUI($);
       var context, cachedFiles;
-
-      ui.setProps({
-        hideInUnifiedMode: shouldHideInUnifiedMode(),
-        displayAsOverlay: shouldDisplayAsOverlay(),
-        displayAsTree: shouldDisplayAsTree(),
-
-        onToggleHideInUnifiedMode: function(checked) {
-          if (checked) {
-            localStorage.setItem('GERRIT_F_BUTTON/HIDE_IN_UNIFIED_MODE', '1');
-          }
-          else {
-            localStorage.removeItem('GERRIT_F_BUTTON/HIDE_IN_UNIFIED_MODE');
-          }
-
-          ui.setProps({
-            hideInUnifiedMode: shouldHideInUnifiedMode()
-          });
-        },
-
-        onToggleDisplayAsTree: function(checked) {
-          if (checked) {
-            localStorage.removeItem('GERRIT_F_BUTTON/DISPLAY_AS_LIST');
-          }
-          else {
-            localStorage.setItem('GERRIT_F_BUTTON/DISPLAY_AS_LIST', '1');
-          }
-
-          ui.setProps({
-            displayAsTree: shouldDisplayAsTree()
-          });
-        },
-
-        onToggleDisplayAsOverlay: function(checked) {
-          if (checked) {
-            localStorage.setItem('GERRIT_F_BUTTON/DISPLAY_AS_OVERLAY', '1');
-          }
-          else {
-            localStorage.removeItem('GERRIT_F_BUTTON/DISPLAY_AS_OVERLAY');
-          }
-
-          ui.setProps({
-            displayAsOverlay: shouldDisplayAsOverlay()
-          });
+      var ui = GerritFButtonUIController($, {
+        isViewingPatchset: function() {
+          return !!context.chNumber;
         }
-      })
-
-      injectCSS(Styles);
+      });
 
       // @event 'showchange'
       //
@@ -205,25 +143,6 @@ export default function GerritFButton() {
         }
       });
 
-      window.addEventListener('keyup', function(e) {
-        if (
-          !context.chNumber /* not viewing a change? forget it! */ ||
-          (isInUnifiedMode() && shouldHideInUnifiedMode())
-        ) {
-          if (ui.isMounted()) {
-            ui.unmount();
-          }
-
-          return;
-        }
-
-        if ([ e.keyCode, e.which ].indexOf(KC_F) > -1) {
-          if (!$(e.target).is('input, textarea')) {
-            ui.toggle();
-          }
-        }
-      });
-
       console.log('gerrit-f-button: active.');
 
       function fetchFilesAndRender(chNumber, rvNumber) {
@@ -235,10 +154,7 @@ export default function GerritFButton() {
       }
 
       function render() {
-        ui.setProps({
-          files: cachedFiles,
-          currentFile: context.currentFile
-        });
+        ui.render(cachedFiles, context.activeFile);
       }
     }
   };

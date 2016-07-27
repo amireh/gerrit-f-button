@@ -4,7 +4,7 @@
   "description": "Gerrit F button TamperMonkey script",
   "main": "gerrit-f-button.js",
   "scripts": {
-    "build": "rollup -c",
+    "build": "NODE_ENV=production rollup -c",
     "lint": "eslint src",
     "test": "mocha 'src/**/*.test.js'"
   },
