@@ -53,13 +53,27 @@ script is so cool that it naturally expects users to be as cool (or cooler,
 if that's even possible), so if you're lacking on cool, I advise you to
 work on that first.
 
+But wait, there's more.
+
+Should you either intentionally or via the casual faceroll happen to land
+on a `CTRL + META + SHIFT + F` key combination, the F panel will 
+unconditionally take itself to the stage. No seriously, this is quite useful to
+accommodate a keyboard-only reviewing flow since Gerrit's editor will normally
+steal all (well, _most_) key presses, preventing you from reaching out to the
+panel, pressing this combination will forcefully steal the focus away from the 
+editor and pass it on to the glorious F frame.
+
+If you're thinking the combination is mad, well, you may be right, but it's only because having scripts steal and manage focus is so maddening in the 
+first place, it was only appropriate to make an opt-in behavior just as 
+maddening.
+
 ## Changelog
 
-**2.1.1**
+#### 2.1.1
 
 - Version is now attached in the banner inside `gerrit-f-button.js`
 
-**2.1.0**
+#### 2.1.0
 
 - Added an option to hide the panel in Unified Diff view since Gerrit still 
   supports the native F button functionality there
@@ -70,7 +84,7 @@ work on that first.
 - Keyboard navigation is now possible using J, K, and RETURN
 - (internal) Broke the thing into modules since it was getting big
 
-**2.0**
+#### 2.0
 
 - Files are now displayed in a tree view, upping the glory factor to a 
   Phabricating level (oh-uh)
@@ -78,7 +92,7 @@ work on that first.
   within such a confined space (and usually you needed the code context to
   make sense of the comments anyway)
 
-**09/13/2015**
+#### 1.1.0
 
 - The popup will no longer show up if you're writing in an `<input />` or a `<textarea />` widgets
 
