@@ -69,6 +69,10 @@ maddening.
 
 ## Changelog
 
+#### 2.1.2
+
+- No longer toggles for CMD+F or CTRL+F.
+
 #### 2.1.1
 
 - Version is now attached in the banner inside `gerrit-f-button.js`

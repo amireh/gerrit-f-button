@@ -8,7 +8,7 @@
 // @run-at      document.end
 // ==/UserScript==
 
-/* gerrit-f-button.js v2.1.0 */
+/* gerrit-f-button.js v2.1.2 */
 
 (function () {
   'use strict';
@@ -761,6 +761,10 @@
           // Double-pressing this combination _should_ hide the panel.
           if (megaKey && ui.isMounted() && !shouldIntercept($, e.target)) {
             ui.stealFocus();
+          }
+          // Allow cmd+f and ctrl+f through to permit search.
+          else if (e.ctrlKey || e.metaKey) {
+            return;
           }
           else {
             ui.toggle(null, { stealFocus: megaKey });
