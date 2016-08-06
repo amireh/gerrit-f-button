@@ -46,6 +46,10 @@ export default function GerritFButtonUIController($, core) {
         if (megaKey && ui.isMounted() && !shouldIntercept($, e.target)) {
           ui.stealFocus();
         }
+        // Allow cmd+f and ctrl+f through to permit search.
+        else if (e.ctrlKey || e.metaKey) {
+          return;
+        }
         else {
           ui.toggle(null, { stealFocus: megaKey });
         }
