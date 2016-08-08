@@ -1,5 +1,6 @@
 import { discardLeadingSlash } from './utils';
 import GerritFButtonUIController from './ui_controller';
+import { version } from '../package.json';
 
 var NR_AJAX_CALLS = 2;
 
@@ -143,7 +144,7 @@ export default function GerritFButton() {
         }
       });
 
-      console.log('gerrit-f-button: active.');
+      console.log('gerrit-f-button: version %s.', version);
 
       function fetchFilesAndRender(chNumber, rvNumber) {
         fetch(chNumber, rvNumber, function(files) {

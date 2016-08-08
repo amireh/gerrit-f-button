@@ -56,15 +56,24 @@ export default function GerritFButtonUIController($, core) {
 
         break;
       case KC_J:
-        ui.selectNextFile();
+        if (ui.isMounted()) {
+          ui.selectNextFile();
+        }
+
         break;
 
       case KC_K:
-        ui.selectPreviousFile();
+        if (ui.isMounted()) {
+          ui.selectPreviousFile();
+        }
+
         break;
 
       case KC_RETURN:
-        ui.activateSelectedFile();
+        if (ui.isMounted()) {
+          ui.activateSelectedFile();
+        }
+
         break;
     }
   }, false);

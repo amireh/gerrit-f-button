@@ -69,6 +69,10 @@ maddening.
 
 ## Changelog
 
+#### 2.1.3
+
+- No longer intercepts J, K, or RETURN if the popup is not shown.
+
 #### 2.1.2
 
 - No longer toggles for CMD+F or CTRL+F.
