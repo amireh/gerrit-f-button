@@ -69,6 +69,10 @@ maddening.
 
 ## Changelog
 
+#### 2.1.4
+
+- Now publishing to NPM
+
 #### 2.1.3
 
 - No longer intercepts J, K, or RETURN if the popup is not shown.

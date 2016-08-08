@@ -1,6 +1,6 @@
 {
   "name": "gerrit-f-button",
-  "version": "2.1.3",
+  "version": "2.1.4",
   "description": "Gerrit F button TamperMonkey script",
   "main": "gerrit-f-button.js",
   "scripts": {
@@ -24,6 +24,10 @@
   "bugs": {
     "url": "https://github.com/amireh/gerrit-f-button/issues"
   },
+  "files": [
+    "README.md",
+    "gerrit-f-button.js"
+  ],
   "homepage": "https://github.com/amireh/gerrit-f-button#readme",
   "devDependencies": {
     "chai": "3.5.0",
